@@ -22,6 +22,22 @@ ZSH_NETWORK_STATUS_PROMPT_CACHE_EXPIRATION=${ZSH_NETWORK_STATUS_PROMPT_CACHE_EXP
 ZSH_NETWORK_STATUS_PROMPT_SIDE=${ZSH_NETWORK_STATUS_PROMPT_SIDE:-"RPROMPT"}
 
 # ------------------------------------------------------------------------------
+# Proxy Quick Switch Functions
+# ------------------------------------------------------------------------------
+
+start_proxy() {
+    export https_proxy="http://127.0.0.1:7890" \
+           http_proxy="http://127.0.0.1:7890" \
+           all_proxy="socks5://127.0.0.1:7890"
+    zsh_network_status_refresh
+}
+
+end_proxy() {
+    unset https_proxy http_proxy all_proxy
+    zsh_network_status_refresh
+}
+
+# ------------------------------------------------------------------------------
 # Cache
 # ------------------------------------------------------------------------------
 
