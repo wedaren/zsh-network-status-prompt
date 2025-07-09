@@ -29,18 +29,64 @@ ZSH_NETWORK_STATUS_PROMPT_SIDE=${ZSH_NETWORK_STATUS_PROMPT_SIDE:-"RPROMPT"}
 _ZSH_NETWORK_STATUS_CACHE_DIR="${ZSH_CACHE_DIR:-$HOME/.zsh-cache}"
 # Cache file path
 _ZSH_NETWORK_STATUS_CACHE_FILE="$_ZSH_NETWORK_STATUS_CACHE_DIR/zsh-network-status-prompt.cache"
+# Proxy configuration cache file path
+_ZSH_NETWORK_STATUS_PROXY_CACHE_FILE="$_ZSH_NETWORK_STATUS_CACHE_DIR/zsh-network-status-proxy.cache"
 
 # Ensure cache directory exists
 mkdir -p "$_ZSH_NETWORK_STATUS_CACHE_DIR"
+
+# Global variable to store current proxy configuration status
+_ZSH_NETWORK_STATUS_PROXY_HASH=""
 
 # ------------------------------------------------------------------------------
 # Core Functions
 # ------------------------------------------------------------------------------
 
-# Check if proxy environment variables are set (case-insensitive).
-_zsh_network_status_is_proxy_enabled() {
+# Generate a simple proxy status indicator (enabled/disabled)
+_zsh_network_status_get_proxy_status() {
     if [[ -n "${http_proxy}" || -n "${https_proxy}" || -n "${all_proxy}" || \
           -n "${HTTP_PROXY}" || -n "${HTTPS_PROXY}" || -n "${ALL_PROXY}" ]]; then
+        echo "enabled"
+    else
+        echo "disabled"
+    fi
+}
+
+# Check if proxy configuration has changed
+_zsh_network_status_check_proxy_change() {
+    local current_status
+    current_status=$(_zsh_network_status_get_proxy_status)
+    
+    # Read cached status from file
+    local cached_status=""
+    if [[ -f "$_ZSH_NETWORK_STATUS_PROXY_CACHE_FILE" ]]; then
+        cached_status=$(<"$_ZSH_NETWORK_STATUS_PROXY_CACHE_FILE")
+    fi
+    
+    # Compare with cached status
+    if [[ "$current_status" != "$cached_status" ]]; then
+        # Proxy configuration changed, update cache and refresh
+        echo "$current_status" >| "$_ZSH_NETWORK_STATUS_PROXY_CACHE_FILE"
+        _ZSH_NETWORK_STATUS_PROXY_HASH="$current_status"
+        
+        # Auto refresh network status when proxy changes
+        if [[ -n "$cached_status" ]]; then  # Only refresh if there was a previous configuration
+            zsh_network_status_refresh >/dev/null 2>&1
+        fi
+        return 0  # Configuration changed
+    else
+        _ZSH_NETWORK_STATUS_PROXY_HASH="$current_status"
+        return 1  # No change
+    fi
+}
+
+# Check if proxy environment variables are set (case-insensitive).
+_zsh_network_status_is_proxy_enabled() {
+    # Check for proxy configuration changes first
+    _zsh_network_status_check_proxy_change
+    
+    # Use cached status instead of re-checking environment variables
+    if [[ "$_ZSH_NETWORK_STATUS_PROXY_HASH" == "enabled" ]]; then
         return 0 # Proxy is enabled
     else
         return 1 # Proxy is disabled
@@ -85,9 +131,14 @@ _zsh_network_status_get_status() {
 
 # Force a refresh of the network status, bypassing the cache.
 zsh_network_status_refresh() {
-    # Remove the cache file to trigger a new check on the next prompt.
+    # Remove the cache files to trigger a new check on the next prompt.
     rm -f "$_ZSH_NETWORK_STATUS_CACHE_FILE"
-    echo "Network status cache cleared. Status will be refreshed on the next prompt."
+    rm -f "$_ZSH_NETWORK_STATUS_PROXY_CACHE_FILE"
+    
+    # Reset proxy hash to force recheck
+    _ZSH_NETWORK_STATUS_PROXY_HASH=""
+    
+    echo "Network status and proxy cache cleared. Status will be refreshed on the next prompt."
 }
 
 # ------------------------------------------------------------------------------
@@ -130,6 +181,9 @@ _zsh_network_status_prompt_init() {
 
     # Load required zsh modules
     autoload -U add-zsh-hook
+
+    # Initialize proxy configuration cache
+    _zsh_network_status_check_proxy_change >/dev/null 2>&1
 
     # This function will be called before each prompt is displayed
     _zsh_network_status_precmd() {
