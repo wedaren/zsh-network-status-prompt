@@ -46,7 +46,7 @@ start_proxy() {
     export https_proxy="http://127.0.0.1:7890" \
            http_proxy="http://127.0.0.1:7890" \
            all_proxy="socks5://127.0.0.1:7890"
-    echo "enable" >| "$_ZSH_NETWORK_STATUS_PROXY_CACHE_FILE"
+    echo "enabled" >| "$_ZSH_NETWORK_STATUS_PROXY_CACHE_FILE"
     _zsh_network_status_check_connectivity_sync
 }
 
@@ -174,8 +174,8 @@ _zsh_network_status_prompt_init() {
 
     # Load required zsh modules
     autoload -U add-zsh-hook
-
     # Initialize proxy configuration cache
+    _zsh_network_status_get_proxy_status > "$_ZSH_NETWORK_STATUS_PROXY_CACHE_FILE"
 
     # This function will be called before each prompt is displayed
     _zsh_network_status_precmd() {
