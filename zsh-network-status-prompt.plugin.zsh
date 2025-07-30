@@ -45,13 +45,15 @@ touch "$_ZSH_NETWORK_STATUS_PROXY_CACHE_FILE"
 start_proxy() {
     export https_proxy="http://127.0.0.1:7890" \
            http_proxy="http://127.0.0.1:7890" \
-           all_proxy="socks5://127.0.0.1:7890"
+           all_proxy="socks5://127.0.0.1:7890" \
+           grpc_proxy="http://127.0.0.1:7890"
+    export GRPC_PROXY="http://127.0.0.1:7890"
     echo "enabled" >| "$_ZSH_NETWORK_STATUS_PROXY_CACHE_FILE"
     _zsh_network_status_check_connectivity_sync
 }
 
 end_proxy() {
-    unset https_proxy http_proxy all_proxy
+    unset https_proxy http_proxy all_proxy grpc_proxy GRPC_PROXY
     echo "disable" >| "$_ZSH_NETWORK_STATUS_PROXY_CACHE_FILE"
     _zsh_network_status_check_connectivity_sync
 }
@@ -64,8 +66,8 @@ end_proxy() {
 
 # Generate a simple proxy status indicator (enabled/disabled)
 _zsh_network_status_get_proxy_status() {
-    if [[ -n "${http_proxy}" || -n "${https_proxy}" || -n "${all_proxy}" || \
-          -n "${HTTP_PROXY}" || -n "${HTTPS_PROXY}" || -n "${ALL_PROXY}" ]]; then
+    if [[ -n "${http_proxy}" || -n "${https_proxy}" || -n "${all_proxy}" || -n "${grpc_proxy}" || \
+          -n "${HTTP_PROXY}" || -n "${HTTPS_PROXY}" || -n "${ALL_PROXY}" || -n "${GRPC_PROXY}" ]]; then
         echo "enabled"
     else
         echo "disabled"

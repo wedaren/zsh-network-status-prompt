@@ -35,7 +35,7 @@ sudo mv /opt/homebrew/bin/curl.bak /opt/homebrew/bin/curl 2>/dev/null || echo "c
 
 ```bash
 # 测试无代理状态
-unset http_proxy https_proxy all_proxy HTTP_PROXY HTTPS_PROXY ALL_PROXY
+unset http_proxy https_proxy all_proxy grpc_proxy HTTP_PROXY HTTPS_PROXY ALL_PROXY GRPC_PROXY
 source ./zsh-network-status-prompt.plugin.zsh
 echo "代理状态检测结果: $(_zsh_network_status_is_proxy_enabled && echo '启用' || echo '禁用')"
 
@@ -58,8 +58,18 @@ unset https_proxy
 export all_proxy="socks5://127.0.0.1:1080"
 echo "设置 all_proxy 后: $(_zsh_network_status_is_proxy_enabled && echo '启用' || echo '禁用')"
 
+# 测试 grpc_proxy
+unset all_proxy
+export grpc_proxy="http://127.0.0.1:50051"
+echo "设置 grpc_proxy 后: $(_zsh_network_status_is_proxy_enabled && echo '启用' || echo '禁用')"
+
+# 测试 GRPC_PROXY
+unset grpc_proxy
+export GRPC_PROXY="http://127.0.0.1:50051"
+echo "设置 GRPC_PROXY 后: $(_zsh_network_status_is_proxy_enabled && echo '启用' || echo '禁用')"
+
 # 清理测试环境
-unset http_proxy https_proxy all_proxy HTTP_PROXY HTTPS_PROXY ALL_PROXY
+unset http_proxy https_proxy all_proxy grpc_proxy HTTP_PROXY HTTPS_PROXY ALL_PROXY GRPC_PROXY
 ```
 
 ### 1.4 网络连接测试
