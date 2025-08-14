@@ -56,6 +56,14 @@ end_proxy() {
     _zsh_network_status_check_connectivity_sync
 }
 
+# Manual refresh function for debugging and user control
+zsh_network_status_refresh() {
+    echo "🔄 刷新网络状态缓存..."
+    rm -f "$_ZSH_NETWORK_STATUS_CACHE_FILE"
+    _zsh_network_status_check_connectivity_sync
+    echo "✅ 缓存已刷新"
+}
+
 
 
 # ------------------------------------------------------------------------------
@@ -102,7 +110,7 @@ _zsh_network_status_check_connectivity_sync() {
 
 # Perform the actual network connectivity check.
 _zsh_network_status_check_connectivity() {
-    command curl -s --head --connect-timeout "$ZSH_NETWORK_STATUS_PROMPT_TIMEOUT" "http://${ZSH_NETWORK_STATUS_PROMPT_HOST}" >/dev/null 2>&1
+    command curl -s --head --connect-timeout "$ZSH_NETWORK_STATUS_PROMPT_TIMEOUT" "https://${ZSH_NETWORK_STATUS_PROMPT_HOST}" >/dev/null 2>&1
 }
 
 # Get the network status, using cache if available and not expired.
@@ -124,9 +132,8 @@ _zsh_network_status_get_status() {
 
     # If cache is expired, perform a new check
     if (( (current_time - last_check_time) > ZSH_NETWORK_STATUS_PROMPT_CACHE_EXPIRATION )) || [[ -z "$cached_status" ]]; then
-        _zsh_network_status_check_connectivity_async
+        _zsh_network_status_check_connectivity_sync
         if [[ -z "$cached_status" ]]; then
-            echo "checking"
             return
         fi
     fi
